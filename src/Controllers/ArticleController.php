@@ -55,10 +55,10 @@ class ArticleController
             return;
         }
 
-        $payLoad = json_decode(file_get_contents('php://input'), true);
+        $payload = json_decode(file_get_contents('php://input'), true);
 
         if ($method === 'POST') {
-            $author = $this->authorRepository->findById((int)$payLoad['author']) ?? null;
+            $author = $this->authorRepository->findById((int)$payload['author']) ?? null;
             if (!$author) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Autor no encontrado']);
@@ -67,12 +67,12 @@ class ArticleController
 
             $article = new Article(
                 0,
-                $payLoad['title'],
-                $payLoad['description'] ?? '',
-                new \DateTime($payLoad['publication_date'] ?? 'now'),
+                $payload['title'],
+                $payload['description'] ?? '',
+                new \DateTime($payload['publication_date'] ?? 'now'),
                 $author,
-                $payLoad['doi'] ?? '',
-                $payLoad['journal'] ?? ''
+                $payload['doi'] ?? '',
+                $payload['journal'] ?? ''
             );
 
             $success = $this->articleRepository->create($article);
@@ -81,7 +81,54 @@ class ArticleController
             return;
         }
 
-        // Opcional: manejar PUT, DELETE si quieres
+        if ($method === 'PUT') {
+            try {
+                if (!isset($payload['id'])) {
+                    throw new \InvalidArgumentException('ID es requerido para actualizar');
+                }
+
+                $existing = $this->articleRepository->findById((int)$payload['id']);
+                if (!$existing) {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'Artículo no encontrado']);
+                    return;
+                }
+
+                if (isset($payload['title'])) $existing->setTitle($payload['title']);
+                if (isset($payload['description'])) $existing->setDescription($payload['description']);
+                if (isset($payload['publication_date'])) {
+                    $existing->setPublicationDate(new \DateTime($payload['publication_date']));
+                }
+                if (isset($payload['doi'])) $existing->setDoi($payload['doi']);
+                if (isset($payload['journal'])) $existing->setJournal($payload['journal']);
+                if (isset($payload['author'])) {
+                    $author = $this->authorRepository->findById((int)$payload['author']);
+                    if ($author) $existing->setAuthor($author);
+                }
+
+                $success = $this->articleRepository->update($existing);
+                echo json_encode(['success' => $success]);
+            } catch (\Throwable $e) {
+                http_response_code(400);
+                echo json_encode(['error' => $e->getMessage()]);
+            }
+            return;
+        }
+
+        if ($method === 'DELETE') {
+            try {
+                if (!isset($payload['id'])) {
+                    throw new \InvalidArgumentException('ID es requerido para eliminar');
+                }
+
+                $success = $this->articleRepository->delete((int)$payload['id']);
+                echo json_encode(['success' => $success]);
+            } catch (\Throwable $e) {
+                http_response_code(400);
+                echo json_encode(['error' => $e->getMessage()]);
+            }
+            return;
+        }
 
         http_response_code(405);
         echo json_encode(['error' => 'Método no permitido']);

@@ -188,35 +188,9 @@ BEGIN
     SELECT @new_pub_id AS pub_id;
 END$$
 --CREAR LA FUNCION ACTUALIZAR UN LIBRO
-CREATE OR REPLACE PROCEDURE sp_update_book(
-    IN p_publication_id         INT,
-    IN p_title                  VARCHAR(255),
-    IN p_description            TEXT,
-    IN p_publication_date       DATE,
-    IN p_author_id              INT,
-    IN p_isbn                   VARCHAR(20),
-    IN p_gender                 VARCHAR(20),
-    IN p_edition                INT
-)
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-    END;
-    START TRANSACTION;
-    UPDATE publication
-    SET title = p_title,
-        description = p_description,
-        publication_date = p_publication_date,
-        author_id = p_author_id
-    WHERE id = p_publication_id;
-    UPDATE book
-    SET ISBN = p_isbn,
-        gender = p_gender,
-        edition = p_edition
-    WHERE publication_id = p_publication_id;
-    COMMIT;
-END$$
+
+DELIMITER ;
+
 -- FUNCION PARA ELIMINAR UN LIBRO
 CREATE OR REPLACE PROCEDURE sp_delete_book(IN P_id INT)
 BEGIN
@@ -280,17 +254,14 @@ BEGIN
 END$$
 
 -- CREAR UN NUEVO ARTÍCULO
+DELIMITER $$
 CREATE OR REPLACE PROCEDURE sp_create_article(
     IN p_title            VARCHAR(255),
     IN p_description      TEXT,
     IN p_publication_date DATE,
     IN p_author_id        INT,
     IN p_doi              VARCHAR(20),
-    IN p_abstract         VARCHAR(300),
-    IN p_keywords         VARCHAR(50),
-    IN p_indexation       VARCHAR(20),
-    IN p_magazine         VARCHAR(50),
-    IN p_area             VARCHAR(50)
+    IN p_journal          VARCHAR(50)
 )
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -309,7 +280,7 @@ BEGIN
         publication_id, doi, abstract, keywords, indexaTion, magazine, area
     )
     VALUES (
-        @new_pub_id, p_doi, p_abstract, p_keywords, p_indexation, p_magazine, p_area
+        @new_pub_id, p_doi, '', '', '', p_journal, ''
     );
 
     COMMIT;
@@ -318,6 +289,8 @@ BEGIN
 END$$
 
 -- ACTUALIZAR UN ARTÍCULO
+DELIMITER $$
+
 CREATE OR REPLACE PROCEDURE sp_update_article(
     IN p_publication_id   INT,
     IN p_title            VARCHAR(255),
@@ -325,11 +298,7 @@ CREATE OR REPLACE PROCEDURE sp_update_article(
     IN p_publication_date DATE,
     IN p_author_id        INT,
     IN p_doi              VARCHAR(20),
-    IN p_abstract         VARCHAR(300),
-    IN p_keywords         VARCHAR(50),
-    IN p_indexation       VARCHAR(20),
-    IN p_magazine         VARCHAR(50),
-    IN p_area             VARCHAR(50)
+    IN p_journal          VARCHAR(50)
 )
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -348,15 +317,17 @@ BEGIN
 
     UPDATE article
     SET doi = p_doi,
-        abstract = p_abstract,
-        keywords = p_keywords,
-        indexaTion = p_indexation,
-        magazine = p_magazine,
-        area = p_area
+        abstract = '',           -- valores vacíos para cumplir con NOT NULL
+        keywords = '',
+        indexaTion = '',
+        magazine = p_journal,
+        area = ''
     WHERE publication_id = p_publication_id;
 
     COMMIT;
 END$$
+
+DELIMITER ;
 
 -- ELIMINAR UN ARTÍCULO
 CREATE OR REPLACE PROCEDURE sp_delete_article(IN P_id INT)
