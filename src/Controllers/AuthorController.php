@@ -23,6 +23,7 @@ class AuthorController
             'first_name' => $author->getFirstName(),
             'last_name' => $author->getLastName(),
             'username' => $author->getUsername(),
+            'password' => $author->getPassword(),
             'email' => $author->getEmail(),
             'orcid' => $author->getOrcid(),
             'affiliation' => $author->getAffiliation()
