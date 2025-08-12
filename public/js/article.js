@@ -1,19 +1,18 @@
-const createBooksPanel = () => {
+const createArticlesPanel = () => {
     const authorStore = Ext.getStore("authorStore");
     if(!authorStore){
         console.warn("authorStore no encontrado. Cargue el archivo author.js");
     }
-    if (!Ext.ClassManager.isCreated('App.Model.Book')) {
-        Ext.define("App.Model.Book", {
+    if (!Ext.ClassManager.isCreated('App.Model.Article')) {
+        Ext.define("App.Model.Article", {
             extend: 'Ext.data.Model',
             fields: [
                 {name: "id", type: "int"},
                 {name: "title", type: "string"},
                 {name: "description", type: "string"},
                 {name: "publication_date", type: "date", dateFormat: 'Y-m-d'},
-                {name: "isbn", type: "string"},
-                {name: "gender", type: "string"},
-                {name: "edition", type: "int"},
+                {name: "doi", type: "string"},
+                {name: "journal", type: "string"},
                 {name: "author_id", mapping: 'author.id', type: "int"},
                 {name: "author_first_name", mapping: 'author.first_name', type: "string"},
                 {name: "author_last_name", mapping: 'author.last_name', type: "string"},
@@ -40,12 +39,12 @@ const createBooksPanel = () => {
         });
     }
 
-    const bookStore = Ext.create("Ext.data.Store", {
-        storeId: "bookStore",
-        model: "App.Model.Book",
+    const articleStore = Ext.create("Ext.data.Store", {
+        storeId: "articleStore",
+        model: "App.Model.Article",
         proxy: {
             type: "rest",
-            url: "api/book.php",
+            url: "api/article.php",
             reader: {
                 type: "json", 
                 rootProperty: ""
@@ -57,19 +56,19 @@ const createBooksPanel = () => {
         autoSync: false,
         listeners: {
             load: function(store, records, success) {
-                console.log('Books store loaded:', success);
+                console.log('Articles store loaded:', success);
                 console.log('First record data:', records[0] ? records[0].getData() : 'No records');
                 if (records.length > 0) {
-                    console.log('Raw data del primer libro:', records[0].raw);
+                    console.log('Raw data del primer artículo:', records[0].raw);
                 }
             }
         }
     });
 
     const grid = Ext.create('Ext.grid.Panel', {
-        title: "Books",
-        store: bookStore,
-        itemId: "bookPanel",
+        title: "Articles",
+        store: articleStore,
+        itemId: "articlePanel",
         layout: "fit",
         columns: [
             {
@@ -97,46 +96,33 @@ const createBooksPanel = () => {
                 }
             },
             {
+                text: "DOI",
+                flex: 1,
+                sortable: false,
+                dataIndex: "doi"
+            },
+            {
+                text: "Journal",
+                flex: 1,
+                sortable: false,
+                dataIndex: "journal"
+            },
+            {
                 text: "Author",
                 flex: 1,
                 sortable: true,
                 dataIndex: "authorName"
-            },
-            {
-                text: "ISBN",
-                flex: 1,
-                sortable: false,
-                dataIndex: "isbn"
-            },
-            {
-                text: "Gender",
-                width: 120,
-                sortable: false,
-                dataIndex: "gender"
-            },
-            {
-                text: "Edition",
-                width: 80,
-                sortable: false,
-                dataIndex: "edition"
             }
         ],
-        tbar: 
-        [
-            {
-                text:'Add'
-            },
-            {
-                text:'Edit'
-            },
-            {
-                text:'Delete'
-            }
+        tbar: [
+            { text: 'Add' },
+            { text: 'Edit' },
+            { text: 'Delete' }
         ]
     });
-    
+
     return grid;
 };
 
 // Hacer la función disponible globalmente
-window.createBooksPanel = createBooksPanel;
+window.createArticlesPanel = createArticlesPanel;
