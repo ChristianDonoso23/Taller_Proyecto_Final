@@ -14,25 +14,12 @@ const createArticlesPanel = () => {
                 {name: "doi", type: "string"},
                 {name: "journal", type: "string"},
                 {name: "author_id", mapping: 'author.id', type: "int"},
-                {name: "author_first_name", mapping: 'author.first_name', type: "string"},
-                {name: "author_last_name", mapping: 'author.last_name', type: "string"},
                 {
                     name: "authorName", 
                     convert: function(value, record) {
-                        const firstName = record.get('author_first_name');
-                        const lastName = record.get('author_last_name');
-                        if (firstName && lastName) {
-                            return `${firstName} ${lastName}`;
-                        }
-                        else if (firstName) {
-                            return firstName;
-                        }
-                        else if (lastName) {
-                            return lastName;
-                        }
-                        else {
-                            return "N/A";
-                        }
+                        const a = record.get('author');
+                        return a ? `${a.first_name} ${a.last_name}` : '';
+
                     }
                 }
             ]
