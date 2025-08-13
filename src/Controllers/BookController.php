@@ -42,7 +42,6 @@ class BookController
         header('Content-Type: application/json');
         $method = $_SERVER['REQUEST_METHOD'];
 
-
         if ($method === 'GET') {
             if (isset($_GET['id'])) {
                 $book = $this->bookRepository->findById((int)$_GET['id']);
@@ -60,7 +59,13 @@ class BookController
         $payLoad = json_decode(file_get_contents('php://input'), true);
 
         if ($method === 'POST') {
-            $author = $this->authorRepository->findById((int)$payLoad['author']) ?? 0;
+            if (!isset($payLoad['author_id'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'author_id es requerido']);
+                return;
+            }
+
+            $author = $this->authorRepository->findById((int)$payLoad['author_id']);
             if (!$author) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Autor no encontrado']);
@@ -69,30 +74,37 @@ class BookController
 
             $book = new Book(
                 0,
-                $payLoad['title'],
-                $payLoad['description'],
+                $payLoad['title'] ?? '',
+                $payLoad['description'] ?? '',
                 new \DateTime($payLoad['publication_date'] ?? 'now'),
                 $author,
-                $payLoad['isbn'],
-                $payLoad['gender'],
-                $payLoad['edition']
+                $payLoad['isbn'] ?? '',
+                $payLoad['gender'] ?? '',
+                $payLoad['edition'] ?? 1
             );
 
-            echo json_encode(['Success' => $this->bookRepository->create($book)]);
+            $success = $this->bookRepository->create($book);
 
+            if ($success) {
+                $newBook = $this->bookRepository->findById($book->getId());
+                echo json_encode($this->bookToArray($newBook));
+            } else {
+                echo json_encode(['success' => false]);
+            }
+            return;
         }
 
-        if ($method === 'PUT'){
-            $id = (int)$payLoad['id'] ?? 0;
+        if ($method === 'PUT') {
+            $id = (int)($payLoad['id'] ?? 0);
             $existing = $this->bookRepository->findById($id);
-            if (!$existing){
+            if (!$existing) {
                 http_response_code(404);
                 echo json_encode(['error' => 'Libro no encontrado']);
                 return;
             }
 
-            if (isset($payLoad['author'])){
-                $author = $this->authorRepository->findById((int)$payLoad['author']);
+            if (isset($payLoad['author_id'])) {
+                $author = $this->authorRepository->findById((int)$payLoad['author_id']);
                 if ($author) $existing->setAuthor($author);
             }
 
@@ -104,12 +116,19 @@ class BookController
             if (isset($payLoad['isbn'])) $existing->setIsbn($payLoad['isbn']);
             if (isset($payLoad['gender'])) $existing->setGender($payLoad['gender']);
             if (isset($payLoad['edition'])) $existing->setEdition($payLoad['edition']);
-            echo json_encode(['Success' => $this->bookRepository->update($existing)]);
+
+            echo json_encode(['success' => $this->bookRepository->update($existing)]);
             return;
         }
-        
+
         if ($method === 'DELETE') {
-            echo json_encode(['Success' => $this->bookRepository->delete((int)$payLoad['id'] ?? null)]);
+            $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
+            if (!$id) {
+                http_response_code(400);
+                echo json_encode(['error' => 'ID es requerido para eliminar']);
+                return;
+            }
+            echo json_encode(['success' => $this->bookRepository->delete($id)]);
             return;
         }
 

@@ -1,3 +1,4 @@
+-- Active: 1752793183249@@127.0.0.1@3306@project_db
 CREATE DATABASE project_db
     DEFAULT CHARACTER SET = 'utf8mb4';
 CREATE TABLE author(  
@@ -106,20 +107,21 @@ VALUES
 (19, '978-0-98-765432-0', 'Distribuidos', 1);
 
 DELIMITER $$
+
 CREATE OR REPLACE PROCEDURE sp_book_list()
 BEGIN
     SELECT 
-        b.`ISBN`,
-        b.`gender`,
-        b.`edition`,
-        b.`publication_id`,
+        b.ISBN,
+        b.gender,
+        b.edition,
+        b.publication_id,
         p.id AS pub_id,
-        p.`title`,
-        p.`description`,      -- <<<< AÑADIDO
-        p.`publication_date`,
-        p.`type`,
+        p.title,
+        p.description,
+        p.publication_date,
+        p.type,
         p.author_id,
-        a.id AS author_id,    -- <<<< CAMBIADO
+        a.id AS author_id,
         a.first_name,
         a.last_name,
         a.username,
@@ -137,17 +139,17 @@ END$$
 CREATE OR REPLACE PROCEDURE sp_find_book(IN P_id INT)
 BEGIN
     SELECT 
-        b.`ISBN`,
-        b.`gender`,
-        b.`edition`,
-        b.`publication_id`,
+        b.ISBN,
+        b.gender,
+        b.edition,
+        b.publication_id,
         p.id AS pub_id,
-        p.`title`,
-        p.`description`,      -- <<<< AÑADIDO
-        p.`publication_date`,
-        p.`type`,
+        p.title,
+        p.description,
+        p.publication_date,
+        p.type,
         p.author_id,
-        a.id AS author_id,    -- <<<< CAMBIADO
+        a.id AS author_id,
         a.first_name,
         a.last_name,
         a.username,
@@ -163,15 +165,14 @@ BEGIN
 END$$
 
 
-
 CREATE OR REPLACE PROCEDURE sp_create_book(
-    IN p_title                  VARCHAR(255),
-    IN p_description            TEXT,
-    IN p_publication_date       DATE,
-    IN p_author_id              INT,
-    IN p_isbn                   VARCHAR(20),
-    IN p_gender                 VARCHAR(20),
-    IN p_edition                INT
+    IN p_title VARCHAR(255),
+    IN p_description TEXT,
+    IN p_publication_date DATE,
+    IN p_author_id INT,
+    IN p_isbn VARCHAR(20),
+    IN p_gender VARCHAR(20),
+    IN p_edition INT
 )
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -181,17 +182,46 @@ BEGIN
     START TRANSACTION;
     INSERT INTO publication (title, description, publication_date, author_id, type)
     VALUES (p_title, p_description, p_publication_date, p_author_id, 'book');
-    SET @new_pub_id := LAST_INSERT_ID();
+    SET @new_pub_id = LAST_INSERT_ID();
     INSERT INTO book (publication_id, ISBN, gender, edition)
     VALUES (@new_pub_id, p_isbn, p_gender, p_edition);
     COMMIT;
     SELECT @new_pub_id AS pub_id;
 END$$
---CREAR LA FUNCION ACTUALIZAR UN LIBRO
 
-DELIMITER ;
 
--- FUNCION PARA ELIMINAR UN LIBRO
+CREATE OR REPLACE PROCEDURE sp_update_book(
+    IN p_id INT,
+    IN p_title VARCHAR(255),
+    IN p_description TEXT,
+    IN p_publication_date DATE,
+    IN p_author_id INT,
+    IN p_isbn VARCHAR(20),
+    IN p_gender VARCHAR(20),
+    IN p_edition INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+    START TRANSACTION;
+    UPDATE publication 
+    SET title = p_title,
+        description = p_description,
+        publication_date = p_publication_date,
+        author_id = p_author_id
+    WHERE id = p_id;
+    UPDATE book 
+    SET ISBN = p_isbn,
+        gender = p_gender,
+        edition = p_edition
+    WHERE publication_id = p_id;
+    COMMIT;
+    SELECT 1 AS OK;
+END$$
+
+
 CREATE OR REPLACE PROCEDURE sp_delete_book(IN P_id INT)
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -204,6 +234,8 @@ BEGIN
     COMMIT;
     SELECT 1 AS OK;
 END$$
+
+DELIMITER ;
 
 -- LISTAR TODOS LOS ARTÍCULOS
 CREATE OR REPLACE PROCEDURE sp_article_list()

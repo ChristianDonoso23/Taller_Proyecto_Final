@@ -10,7 +10,8 @@ use App\Entities\Author;
 use App\Entities\Book;
 use PDO;
 
-class BookRepository implements RepositoryInterface{
+class BookRepository implements RepositoryInterface
+{
     private PDO $db;
     private AuthorRepository $authorRepo;
 
@@ -19,6 +20,7 @@ class BookRepository implements RepositoryInterface{
         $this->db = Database::getConnection();
         $this->authorRepo = new AuthorRepository();
     }
+
     private function hydrate(array $row): Book
     {
         $author = new Author(
@@ -48,14 +50,14 @@ class BookRepository implements RepositoryInterface{
             (int)$row['edition'],
         );
     }
-    
+
     public function findAll(): array
     {
         $stmt = $this->db->query("CALL sp_book_list()");
         $rows = $stmt->fetchAll();
         $stmt->closeCursor();
         $out = [];
-        foreach ($rows as $row){
+        foreach ($rows as $row) {
             $out[] = $this->hydrate($row);
         }
         return $out;
@@ -63,8 +65,7 @@ class BookRepository implements RepositoryInterface{
 
     public function create(object $entity): bool
     {
-        if (!$entity instanceof Book)
-        {
+        if (!$entity instanceof Book) {
             throw new \InvalidArgumentException('Expected instance of Book');
         }
 
@@ -80,12 +81,17 @@ class BookRepository implements RepositoryInterface{
                 'edition' => $entity->getEdition()
             ]
         );
-        
-        if($ok) {
-           $stmt->fetch(); 
+
+        if ($ok) {
+            $row = $stmt->fetch();
+            $stmt->closeCursor();
+            if ($row && isset($row['pub_id'])) {
+                $entity->setId((int)$row['pub_id']); // Actualiza ID en objeto
+            }
+            return true;
         }
         $stmt->closeCursor();
-        return $ok;
+        return false;
     }
 
     public function findById(int $id): ?object
@@ -99,8 +105,7 @@ class BookRepository implements RepositoryInterface{
 
     public function update(object $entity): bool
     {
-        if (!$entity instanceof Book)
-        {
+        if (!$entity instanceof Book) {
             throw new \InvalidArgumentException('Expected instance of Book');
         }
 
@@ -117,14 +122,12 @@ class BookRepository implements RepositoryInterface{
                 'edition' => $entity->getEdition()
             ]
         );
-        
-        if($ok) {
-           $stmt->fetch(); 
+
+        if ($ok) {
+            $stmt->fetch();
         }
         $stmt->closeCursor();
         return $ok;
-
-        return $stmt->execute();
     }
 
     public function delete(int $id): bool

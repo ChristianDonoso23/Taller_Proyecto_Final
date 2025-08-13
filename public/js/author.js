@@ -9,7 +9,13 @@ const createAuthorPanel = () => {
             {name: 'email',         type: 'string'},
             {name: 'password',      type: 'string'},
             {name: 'orcid',         type: 'string'},
-            {name: 'affiliation',   type: 'string'}
+            {name: 'affiliation',   type: 'string'},
+            {
+                name: 'fullName',
+                calculate: function(data) {
+                    return data.first_name + ' ' + data.last_name;
+                }
+            }
         ]
     });
 
