@@ -9,10 +9,10 @@ const createBooksPanel = () => {
       extend: "Ext.data.Model",
       idProperty: "id",
       fields: [
-        { name: "id", type: "int", persist: false }, // No enviar id en create
+        { name: "id", type: "int", persist: false },
         { name: "title", type: "string" },
         { name: "description", type: "string" },
-        { name: "publication_date", type: "date", dateFormat: "Y-m-d" }, // Aquí el cambio
+        { name: "publication_date", type: "date", dateFormat: "Y-m-d" },
         { name: "isbn", type: "string" },
         { name: "gender", type: "string" },
         { name: "edition", type: "int" },
@@ -70,7 +70,7 @@ const createBooksPanel = () => {
               name: "publication_date",
               format: "Y-m-d",
               submitFormat: "Y-m-d",
-            }, // Aquí también el cambio
+            },
             authorComboboxCfg,
             { xtype: "textfield", fieldLabel: "ISBN", name: "isbn" },
             { xtype: "textfield", fieldLabel: "Gender", name: "gender" },
